@@ -197,10 +197,33 @@
 </div>
 
 <script>
-function saveContact() {
-  var vcard = "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Angel Rabago\r\nORG:M3 Digital Agency\r\nTEL;TYPE=WORK,VOICE:+18553426700\r\nEMAIL:angel@creditscorebyattorney.com\r\nADR;TYPE=WORK:;;4410 N Main St;Houston;TX;77009;USA\r\nEND:VCARD";
-  var blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
-  var url = URL.createObjectURL(blob);
+function foldVCardLine(line) {
+  var limit = 74;
+  var out = "";
+  for (var i = 0; i < line.length; i += limit) {
+    out += (i === 0 ? "" : "\r\n ") + line.slice(i, i + limit);
+  }
+  return out;
+}
+
+async function saveContact() {
+  var photoField = "";
+  try {
+    var resp = await fetch("https://creditscorebyattorney.com/__l5e/assets-v1/9e9b1003-8396-4f7f-96be-710418424fd5/angel-rabago.jpg");
+    var blob = await resp.blob();
+    var base64 = await new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onloadend = function() { resolve(reader.result.split(",")[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    photoField = foldVCardLine("PHOTO;ENCODING=b;TYPE=JPEG:" + base64) + "\r\n";
+  } catch (e) {
+    photoField = "";
+  }
+  var vcard = "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Angel Rabago\r\nORG:M3 Digital Agency\r\n" + photoField + "TEL;TYPE=WORK,VOICE:+18553426700\r\nEMAIL:angel@creditscorebyattorney.com\r\nADR;TYPE=WORK:;;4410 N Main St;Houston;TX;77009;USA\r\nEND:VCARD";
+  var vblob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+  var url = URL.createObjectURL(vblob);
   var a = document.createElement("a");
   a.href = url;
   a.download = "Angel_Rabago.vcf";
